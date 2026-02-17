@@ -7,8 +7,7 @@ import path from 'path';
 const repoName = process.argv[2];
 const visibilityArg = process.argv[3];
 
-const visibility =
-  visibilityArg === '--public' ? '--public' : '--private';
+const visibility = visibilityArg === '--public' ? '--public' : '--private';
 
 const VALID_REPO_NAME = /^[A-Za-z0-9._-]+$/;
 
@@ -20,7 +19,7 @@ function fail(message) {
 function run(command, args, options = {}) {
   const result = spawnSync(command, args, {
     stdio: 'inherit',
-    ...options,
+    ...options
   });
 
   if (result.error) {
@@ -37,9 +36,7 @@ function run(command, args, options = {}) {
 function ensureCommandAvailable(command, args = ['--version']) {
   const result = spawnSync(command, args, { stdio: 'ignore' });
   if (result.error || result.status !== 0) {
-    fail(
-      `Missing required command \`${command}\`. Install it and retry.`
-    );
+    fail(`Missing required command \`${command}\`. Install it and retry.`);
   }
 }
 
@@ -62,21 +59,28 @@ on:
 
 jobs:
   publish:
-    if: \${{ hashFiles('package.json') != '' && secrets.NPM_TOKEN != '' }}
+    if: \${{ hashFiles('package.json') != '' }}
     runs-on: ubuntu-latest
 
     permissions:
-      contents: read
+      contents: write
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          token: \${{ secrets.GITHUB_TOKEN }}
 
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
           node-version: 20
           registry-url: https://registry.npmjs.org
+
+      - name: Configure Git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
 
       - name: Install Dependencies
         run: |
@@ -85,6 +89,11 @@ jobs:
           else
             npm install
           fi
+
+      - name: Bump Version
+        run: |
+          npm version patch -m "chore: bump version to %s [skip ci]"
+          git push --follow-tags
 
       - name: Publish
         run: npm publish --access public
@@ -97,26 +106,24 @@ jobs:
 }
 
 if (!repoName) {
-  console.log(
-    'Usage: create-github-repo-1 <repo-name> [--private|--public]'
-  );
+  console.log('Usage: create-github-repo-1 <repo-name> [--private|--public]');
   process.exit(1);
 }
 
 if (!VALID_REPO_NAME.test(repoName)) {
-  fail(
-    'Invalid repo name. Use letters, numbers, ".", "_" or "-".'
-  );
+  fail('Invalid repo name. Use letters, numbers, ".", "_" or "-".');
 }
 
-if (visibilityArg && visibilityArg !== '--public' && visibilityArg !== '--private') {
+if (
+  visibilityArg &&
+  visibilityArg !== '--public' &&
+  visibilityArg !== '--private'
+) {
   fail('Visibility flag must be `--private` or `--public`.');
 }
 
 ensureCommandAvailable('git');
 ensureCommandAvailable('gh');
-ensureCommandAvailable('code');
-ensureCommandAvailable('github');
 ensureGhAuthenticated();
 
 const repoPath = path.resolve(process.cwd(), repoName);
@@ -126,9 +133,7 @@ try {
   if (fs.existsSync(repoPath)) {
     const existingFiles = fs.readdirSync(repoPath);
     if (existingFiles.length > 0) {
-      fail(
-        `Target folder already exists and is not empty: ${repoPath}`
-      );
+      fail(`Target folder already exists and is not empty: ${repoPath}`);
     }
   } else {
     fs.mkdirSync(repoPath, { recursive: true });
@@ -152,24 +157,29 @@ try {
     visibility,
     '--source=.',
     '--remote=origin',
-    '--push',
+    '--push'
   ]);
 
-  // Open editor and GitHub app/command integration.
+  // Open editor if available.
   try {
     run('code', ['.']);
   } catch {
     console.warn('\nWarning: Could not run `code .`.');
   }
 
-  // Required by user request: must execute successfully.
-  run('github', ['.']);
+  // Open GitHub Desktop if available.
+  try {
+    run('github', ['.']);
+  } catch {
+    console.warn('\nWarning: Could not run `github .`.');
+  }
 
   console.log(`\nRepository '${repoName}' created successfully.`);
   console.log('Auto-publish workflow added at .github/workflows/publish.yml');
   console.log(
-    'Set repository secret NPM_TOKEN to enable npm publish on push to main.'
+    'The workflow will auto-bump version (patch) and publish to npm on push to main.'
   );
+  console.log('Set repository secret NPM_TOKEN to enable npm publish.');
 } catch (error) {
   console.error('\nError:', error.message);
   process.exit(1);

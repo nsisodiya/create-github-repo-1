@@ -5,6 +5,9 @@
   "bin": {
     "create-github-repo-1": "./index.js"
   },
+  "scripts": {
+    "setup:hooks": "git config core.hooksPath .githooks"
+  },
   "type": "module",
   "keywords": [
     "github",
@@ -13,5 +16,16 @@
     "automation"
   ],
   "author": "Narendra Sisodiya",
-  "license": "MIT"
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/narendrasisodiya/create-github-repo-1.git"
+  },
+  "bugs": {
+    "url": "https://github.com/narendrasisodiya/create-github-repo-1/issues"
+  },
+  "homepage": "https://github.com/narendrasisodiya/create-github-repo-1#readme",
+  "engines": {
+    "node": ">=18.0.0"
+  }
 }
