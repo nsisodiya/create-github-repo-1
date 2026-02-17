@@ -47,64 +47,6 @@ function ensureGhAuthenticated() {
   }
 }
 
-function writeWorkflowFile() {
-  const workflowDir = path.join('.github', 'workflows');
-  const workflowPath = path.join(workflowDir, 'publish.yml');
-  const workflowContent = `name: Publish Package
-
-on:
-  push:
-    branches:
-      - main
-
-jobs:
-  publish:
-    if: \${{ hashFiles('package.json') != '' }}
-    runs-on: ubuntu-latest
-
-    permissions:
-      contents: write
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          token: \${{ secrets.GITHUB_TOKEN }}
-
-      - name: Setup Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
-          registry-url: https://registry.npmjs.org
-
-      - name: Configure Git
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-
-      - name: Install Dependencies
-        run: |
-          if [ -f package-lock.json ]; then
-            npm ci
-          else
-            npm install
-          fi
-
-      - name: Bump Version
-        run: |
-          npm version patch -m "chore: bump version to %s [skip ci]"
-          git push --follow-tags
-
-      - name: Publish
-        run: npm publish --access public
-        env:
-          NODE_AUTH_TOKEN: \${{ secrets.NPM_TOKEN }}
-`;
-
-  fs.mkdirSync(workflowDir, { recursive: true });
-  fs.writeFileSync(workflowPath, workflowContent);
-}
-
 if (!repoName) {
   console.log('Usage: create-github-repo-1 <repo-name> [--private|--public]');
   process.exit(1);
@@ -144,8 +86,7 @@ try {
   // Initialize repository on main branch.
   run('git', ['init', '-b', 'main']);
   fs.writeFileSync('README.md', `# ${repoName}\n`);
-  fs.writeFileSync('.gitignore', 'node_modules/\n.env\n');
-  writeWorkflowFile();
+  run('npx', ['gitignore', 'node']);
   run('git', ['add', '.']);
   run('git', ['commit', '-m', 'Initial commit']);
 
@@ -175,11 +116,6 @@ try {
   }
 
   console.log(`\nRepository '${repoName}' created successfully.`);
-  console.log('Auto-publish workflow added at .github/workflows/publish.yml');
-  console.log(
-    'The workflow will auto-bump version (patch) and publish to npm on push to main.'
-  );
-  console.log('Set repository secret NPM_TOKEN to enable npm publish.');
 } catch (error) {
   console.error('\nError:', error.message);
   process.exit(1);
