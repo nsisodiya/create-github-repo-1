@@ -1,0 +1,17 @@
+{
+  "name": "create-github-repo-1",
+  "version": "1.0.0",
+  "description": "CLI to create a GitHub repo with folder, git init and push",
+  "bin": {
+    "create-github-repo-1": "./index.js"
+  },
+  "type": "module",
+  "keywords": [
+    "github",
+    "cli",
+    "repo",
+    "automation"
+  ],
+  "author": "Narendra Sisodiya",
+  "license": "MIT"
+}
