@@ -103,9 +103,13 @@ try {
 
   // Open editor if available.
   try {
-    run('code', ['.']);
+    run('antigravity', ['.']);
   } catch {
-    console.warn('\nWarning: Could not run `code .`.');
+    try {
+      run('code', ['.']);
+    } catch {
+      console.warn('\nWarning: Could not run `antigravity .` or `code .`.');
+    }
   }
 
   // Open GitHub Desktop if available.

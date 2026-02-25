@@ -1,6 +1,6 @@
 {
   "name": "create-github-repo-1",
-  "version": "3.0.0",
+  "version": "4.0.0",
   "description": "CLI to create a GitHub repo with folder, git init and push",
   "bin": {
     "create-github-repo-1": "./index.js"
